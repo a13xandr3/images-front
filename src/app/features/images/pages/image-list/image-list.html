@@ -1,0 +1,150 @@
+<section class="image-manager" aria-labelledby="image-manager-title">
+  <!--
+  <header class="image-manager__toolbar">
+    <div>
+      <h1 id="image-manager-title">Arquivos de imagem</h1>
+      @if (response(); as result) {
+        <p>{{ result.filtered_count }} arquivo(s) encontrado(s)</p>
+      } @else {
+        <p>Consulte e visualize as imagens encontradas.</p>
+      }
+    </div>
+    <button type="button" class="refresh-button" (click)="loadImages()" [disabled]="loading()">
+      Atualizar
+    </button>
+  </header>
+  -->
+  <div class="image-manager__panes">
+    <!--lado esquerdo-->
+    <aside class="file-pane" aria-label="Lista de arquivos">
+      <div class="file-pane__heading">
+        <strong>Imagens</strong>
+        @if (response(); as result) {
+          <span>Página {{ currentPage() }} de {{ result.pages }}</span>
+        }
+      </div>
+      <div class="file-pane__content" aria-live="polite">
+        @if (loading()) {
+          <div class="status-message"><span class="spinner" aria-hidden="true"></span><p>Carregando arquivos...</p></div>
+        } @else if (errorMessage(); as message) {
+          <div class="status-message status-message--error">
+            <p>{{ message }}</p>
+            <button type="button" (click)="loadImages()">Tentar novamente</button>
+          </div>
+        } @else if (response(); as result) {
+          @if (result.images.length) {
+            <ul class="file-list">
+              @for (image of result.images; track image.path) {
+                <li>
+                  <button type="button" class="file-item"
+                    [class.file-item--selected]="selectedImage()?.path === image.path"
+                    [attr.aria-pressed]="selectedImage()?.path === image.path"
+                    (keydown)="handleItemKeydown($event, $index)"
+                    (click)="selectImage(image)">
+                    <span class="file-item__icon" aria-hidden="true">IMG</span>
+                    <span class="file-item__details">
+                      <span>{{ image.id }}</span>
+                      <strong [title]="fileName(image.path)">{{ fileName(image.path) }}</strong>
+                    </span>
+                    @if (image.equal || image.similar) {
+                      <span class="file-item__badge">{{ image.equal ? 'Igual' : 'Similar' }}</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="status-message"><p>Nenhuma imagem encontrada para os filtros selecionados.</p></div>
+          }
+        }
+      </div>
+      <!-- paginação -->
+      @if (response(); as result) {
+        @if (result.pages > 1) {
+          <nav class="file-pane__pagination" aria-label="Paginação das imagens">
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="currentPage() === 1 || loading()">
+                <button class="page-link" type="button" aria-label="Primeira página"
+                  [disabled]="currentPage() === 1 || loading()" (click)="firstPage()">
+                  <span aria-hidden="true">&laquo;</span>
+                </button>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage() === 1 || loading()">
+                <button class="page-link" type="button" aria-label="Página anterior"
+                  [disabled]="currentPage() === 1 || loading()" (click)="previousPage()">
+                  <span aria-hidden="true">&lsaquo;</span>
+                </button>
+              </li>
+              @if (showLeadingEllipsis()) {
+                <li class="page-item disabled" aria-hidden="true"><span class="page-link">…</span></li>
+              }
+              @for (page of visiblePages(); track page) {
+                <li class="page-item" [class.active]="page === currentPage()"
+                  [attr.aria-current]="page === currentPage() ? 'page' : null">
+                  <button class="page-link" type="button" [attr.aria-label]="'Ir para a página ' + page"
+                    [disabled]="loading()" (click)="goToPage(page)">{{ page }}</button>
+                </li>
+              }
+              @if (showTrailingEllipsis()) {
+                <li class="page-item disabled" aria-hidden="true"><span class="page-link">…</span></li>
+              }
+              <li class="page-item" [class.disabled]="currentPage() === result.pages || loading()">
+                <button class="page-link" type="button" aria-label="Próxima página"
+                  [disabled]="currentPage() === result.pages || loading()" (click)="nextPage()">
+                  <span aria-hidden="true">&rsaquo;</span>
+                </button>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage() === result.pages || loading()">
+                <button class="page-link" type="button" aria-label="Última página"
+                  [disabled]="currentPage() === result.pages || loading()" (click)="lastPage()">
+                  <span aria-hidden="true">&raquo;</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        }
+      }
+    </aside>
+    <article class="preview-pane" aria-label="Visualização do arquivo selecionado">
+      @if (selectedImage(); as image) {
+        <header class="preview-pane__heading">
+          <div><h2>{{ fileName(image.path) }}</h2></div>
+          <div>
+            <button class="btn btn-primary" 
+                    type="button" 
+                    aria-label="Excluir"
+                    (click)="excluiImage(image.id, response()!.root_path, image.path) ">
+              Excluir
+            </button>
+          </div>
+        </header>
+        <div class="preview-pane__canvas">
+          @if (previewFailed()) {
+            <div class="preview-placeholder">
+              <span aria-hidden="true">IMG</span><strong>Pré-visualização indisponível</strong>
+              <p>Não foi possível carregar o conteúdo desta imagem.</p>
+            </div>
+          } @else if (selectedImageUrl(); as imageUrl) {
+            <img [src]="imageUrl" [alt]="'Pré-visualização de ' + fileName(image.path)"
+              (error)="previewFailed.set(true)" />
+          } @else {
+            <div class="preview-placeholder">
+              <span class="spinner" aria-hidden="true"></span><strong>Carregando imagem...</strong>
+            </div>
+          }
+        </div>
+        <dl class="image-metadata">
+          <div><dt>Caminho</dt><dd>{{ image.path }}</dd></div>
+          <div><dt>Checksum</dt><dd style="font-size: 8.4px;">{{ image.checksum ?? 'Não analisado' }}</dd></div>
+          <div><dt>Cópias exatas</dt><dd>{{ image.exact_count }}</dd></div>
+          <div><dt>Imagens similares</dt><dd>{{ image.similarity_count }}</dd></div>
+        </dl>
+      } @else {
+        <div class="preview-placeholder">
+          <span aria-hidden="true">IMG</span><strong>Selecione uma imagem</strong>
+          <p>Escolha um arquivo na lista para visualizar seus detalhes.</p>
+        </div>
+      }
+    </article>
+  </div>
+</section>
