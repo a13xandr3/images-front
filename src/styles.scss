@@ -1,1 +1,24 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+.app-snackbar--success .mdc-snackbar__surface {
+  background-color: #166534 !important;
+}
+
+.app-snackbar--error .mdc-snackbar__surface {
+  background-color: #991b1b !important;
+}
+
+.app-snackbar--info .mdc-snackbar__surface {
+  background-color: #1e3a8a !important;
+}
