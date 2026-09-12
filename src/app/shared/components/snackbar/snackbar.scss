@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+.snackbar {
+  display: flex;
+  align-items: center;
+  min-width: min(22rem, calc(100vw - 4rem));
+  color: #fff;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.snackbar--success {
+  color: #d1fae5;
+}
+
+.snackbar--error {
+  color: #fee2e2;
+}
+
+.snackbar--info {
+  color: #dbeafe;
+}
+
+button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.25rem;
+}
