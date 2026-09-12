@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { concatMap, from, Observable, toArray } from 'rxjs';
 
 interface Ibody {
   path: string;
@@ -78,17 +78,22 @@ export class Images {
       responseType: 'blob',
     });
   }
-  
-  imageDelete(idImage: string, root_path: string, path: string): Observable<any> {
-    const requestBody = {
-      idFile: Number(idImage),
-      root_path,
-      path,
-    };
-    return this.http.delete(`${this.path}/api/images`, {
-      ...this.requestOptions,
-      body: requestBody,
-    });
+  imageDelete(images: ImageItem[], rootPath: string): Observable<unknown[]> {
+    return from(images).pipe(
+      concatMap((image) => {
+        const requestBody = {
+          idFile: Number(image.id),
+          root_path: rootPath,
+          path: image.path,
+        };
+
+        return this.http.delete(`${this.path}/api/images`, {
+          ...this.requestOptions,
+          body: requestBody,
+        });
+      }),
+      toArray(),
+    );
   }
   
 }
