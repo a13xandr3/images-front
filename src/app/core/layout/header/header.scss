@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.header {
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.header__content {
+  width: min(100% - 2rem, 75rem);
+  margin-inline: auto;
+  padding-block: 1rem;
+}
+
+.header__brand {
+  color: #0f172a;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+}

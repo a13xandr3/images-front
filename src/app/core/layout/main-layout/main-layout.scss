@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.app-shell {
+  display: grid;
+  overflow: hidden;
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.app-content {
+  display: grid;
+  min-height: 0;
+  width: min(100% - 2rem, 75rem);
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding-block: 1rem;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.route-content {
+  min-height: 0;
+}
+
+.route-content > :not(router-outlet) {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 48rem) {
+  :host {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .app-shell {
+    overflow: visible;
+    min-height: 100dvh;
+    height: auto;
+  }
+}

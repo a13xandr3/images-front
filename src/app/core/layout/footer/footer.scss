@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.footer {
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+}
+
+.footer__content {
+  width: min(100% - 2rem, 75rem);
+  margin-inline: auto;
+  padding-block: 1rem;
+}
