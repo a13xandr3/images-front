@@ -1,5 +1,4 @@
 <section class="image-manager" aria-labelledby="image-manager-title">
-  <!--
   <header class="image-manager__toolbar">
     <div>
       <h1 id="image-manager-title">Arquivos de imagem</h1>
@@ -9,16 +8,43 @@
         <p>Consulte e visualize as imagens encontradas.</p>
       }
     </div>
-    <button type="button" class="refresh-button" (click)="loadImages()" [disabled]="loading()">
-      Atualizar
+    <button type="button" class="refresh-button"
+      [class.refresh-button--enabled]="deletionEnabled()"
+      [attr.aria-label]="deletionEnabled() ? 'Bloquear exclusão' : 'Habilitar exclusão'"
+      [title]="deletionEnabled() ? 'Bloquear exclusão' : 'Habilitar exclusão'"
+      (click)="deletionEnabled() ? desabilitarExclusao() : accessModal.showModal()">
+      <span aria-hidden="true">{{ deletionEnabled() ? '🔓' : '🔒' }}</span>
     </button>
   </header>
-  -->
+
+  <dialog #accessModal class="access-modal" aria-labelledby="access-modal-title">
+    <form class="access-modal__form"
+      (submit)="$event.preventDefault(); habilitarExclusao(passwordInput.value, accessModal, passwordInput)">
+      <h2 id="access-modal-title">Habilitar exclusão</h2>
+      <label for="deletion-password">Senha</label>
+      <input #passwordInput id="deletion-password" type="password" autocomplete="current-password" required />
+      <div class="access-modal__actions">
+        <button class="btn btn-secondary" type="button" (click)="passwordInput.value = ''; accessModal.close()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" type="submit">Habilitar</button>
+      </div>
+    </form>
+  </dialog>
   <div class="image-manager__panes">
     <!--lado esquerdo-->
     <aside class="file-pane" aria-label="Lista de arquivos">
       <div class="file-pane__heading">
-        <strong>Imagens</strong>
+        <div class="file-pane__title">
+          <strong>Imagens</strong>
+          @if (selectedImages().length) {
+            <button class="btn btn-danger btn-sm" type="button"
+              [disabled]="deleting() || !deletionEnabled()"
+              (click)="excluiImagens(selectedImages())">
+              {{ deleting() ? 'Excluindo...' : 'Excluir (' + selectedImages().length + ')' }}
+            </button>
+          }
+        </div>
         @if (response(); as result) {
           <span>Página {{ currentPage() }} de {{ result.pages }}</span>
         }
@@ -35,7 +61,13 @@
           @if (result.images.length) {
             <ul class="file-list">
               @for (image of result.images; track image.path) {
-                <li>
+                <li class="file-list__item">
+                  <input class="file-item__checkbox" type="checkbox"
+                    [id]="'select-image-' + image.id"
+                    [checked]="isImageSelected(image)"
+                    [disabled]="deleting() || !deletionEnabled()"
+                    [attr.aria-label]="'Selecionar ' + fileName(image.path)"
+                    (change)="toggleImageSelection(image, $any($event.target).checked)" />
                   <button type="button" class="file-item"
                     [class.file-item--selected]="selectedImage()?.path === image.path"
                     [attr.aria-pressed]="selectedImage()?.path === image.path"
@@ -113,8 +145,9 @@
             <button class="btn btn-primary" 
                     type="button" 
                     aria-label="Excluir"
-                    (click)="excluiImage(image.id, response()!.root_path, image.path) ">
-              Excluir
+                    [disabled]="deleting() || !deletionEnabled()"
+                    (click)="excluiImagens([image])">
+              {{ deleting() ? 'Excluindo...' : 'Excluir' }}
             </button>
           </div>
         </header>
@@ -125,8 +158,22 @@
               <p>Não foi possível carregar o conteúdo desta imagem.</p>
             </div>
           } @else if (selectedImageUrl(); as imageUrl) {
-            <img [src]="imageUrl" [alt]="'Pré-visualização de ' + fileName(image.path)"
+            <img class="preview-pane__image"
+              [src]="imageUrl"
+              [alt]="'Pré-visualização de ' + fileName(image.path)"
+              role="button"
+              tabindex="0"
+              title="Abrir imagem no tamanho original"
+              (click)="imageModal.showModal()"
+              (keydown.enter)="imageModal.showModal()"
+              (keydown.space)="$event.preventDefault(); imageModal.showModal()"
               (error)="previewFailed.set(true)" />
+
+            <dialog #imageModal class="image-modal" [attr.aria-label]="fileName(image.path)">
+              <button class="image-modal__close" type="button" aria-label="Fechar"
+                (click)="imageModal.close()">&times;</button>
+              <img [src]="imageUrl" [alt]="fileName(image.path)" />
+            </dialog>
           } @else {
             <div class="preview-placeholder">
               <span class="spinner" aria-hidden="true"></span><strong>Carregando imagem...</strong>
@@ -136,8 +183,6 @@
         <dl class="image-metadata">
           <div><dt>Caminho</dt><dd>{{ image.path }}</dd></div>
           <div><dt>Checksum</dt><dd style="font-size: 8.4px;">{{ image.checksum ?? 'Não analisado' }}</dd></div>
-          <div><dt>Cópias exatas</dt><dd>{{ image.exact_count }}</dd></div>
-          <div><dt>Imagens similares</dt><dd>{{ image.similarity_count }}</dd></div>
         </dl>
       } @else {
         <div class="preview-placeholder">
